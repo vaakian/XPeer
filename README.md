@@ -84,43 +84,43 @@ EVENTS
 
 ```ts
 
-on('join', (peer: Peer, type: boolean) => {
+xPeer.on('join', (peer: Peer, type: boolean) => {
     // 在与该peer成功建立rtc连接时触发
     // type为false表示我进入房间时，该peer已经在房间内了。（可以用来区分是否提示有人加入）
 })
-on('leave', (peerInfo: PeerInfo) => {
+xPeer.on('leave', (peerInfo: PeerInfo) => {
 
 })
-on('roomInfo', (users: PeerInfo[]) => {
+xPeer.on('roomInfo', (users: PeerInfo[]) => {
 
 })
-on('signal:open', () => {
+xPeer.on('signal:open', () => {
     
 })
-on('signal:error', () => {
+xPeer.on('signal:error', () => {
 
 })
-on('signal:close', () => {
+xPeer.on('signal:close', () => {
 
 })
-on('stream:user', (peer: Peer) => {
+xPeer.on('stream:user', (peer: Peer) => {
     
 })
 
-on('stream:display', (peer: Peer) => {
+xPeer.on('stream:display', (peer: Peer) => {
     
 })
-on('streamStop:display', (peer: Peer)=> {
+xPeer.on('streamStop:display', (peer: Peer)=> {
     
 })
 
 
 // datachannel收到文本数据
-on('message', (peer: Peer, message: string) => {
+xPeer.on('message', (peer: Peer, message: string) => {
     
 })
 // datachannel收到二进制数据
-on('binary', (peer: Peer, binary: ArrayBuffer) => {
+xPeer.on('binary', (peer: Peer, binary: ArrayBuffer) => {
 
 })
 
@@ -173,7 +173,7 @@ datachannel一旦建立之后，再重新设置local和remote都没关系。  �
 
 
 
-目前打tag的方法不对，导致signalEventManager 64行并发推流无法控制。 队列控制？
+
 
 前端部分：ios自动播放问题¿
 
@@ -185,6 +185,10 @@ pc.ontrack: 读tag区分类别，并分别存储。
 
 一次negotiation(offer-answer)可以推多个流：包括多个datachannel/多个track。
 所以打tag，需要在sdp中一次打完。
+
+单独推流无法匹配上ID，但此时只需要匹配display字段存在，而无需匹配id。
+
+需要匹配trackId的情况只有一次发送多个track时。
 
 每当negotiation完毕后，再createDatachannel/addTrack，都需要重新negotiation。
 

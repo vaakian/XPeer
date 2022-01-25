@@ -2,3 +2,5 @@
 /node_modules
 /src
 /bundle
+build.js
+tsconfig.json
