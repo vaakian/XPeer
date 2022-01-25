@@ -1,3 +1,6 @@
+## [XPeer](#) · [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vaakian/xpeer/blob/main/LICENSE) [![npm version](https://img.shields.io/npm/v/xpeer.svg?style=flat)](https://www.npmjs.com/package/xpeer) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#)
+
+
 ## install & usage
 
 ### npm
@@ -11,7 +14,7 @@ yarn add xpeer
 ## Data Model
 
 ```js
-
+// to be added
 ```
 
 
