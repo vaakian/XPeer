@@ -9,7 +9,7 @@ export const EE = new EventEmitter()
 
 // const log = (...args: any[]) => args
 const log = console.log
-export default interface XPeerInit {
+export interface XPeerInit {
   signalServer: string
   peerConfig: RTCConfiguration
 }
@@ -24,7 +24,7 @@ interface XPeerEventMap {
   "stream:display": Peer
 }
 // type XPeerEventHandler = <T extends keyof XPeerEventMap>(event: T, cb: XPeerEventMap[T]) => void
-export class XPeer {
+export default class XPeer {
   localPeer: LocalPeer
   signalServer: string
   ws?: WebSocket
@@ -414,3 +414,5 @@ function addCustomLabelToSdp(sdp: string = '', str: string = '') {
 
   return lines.join("\n")
 }
+// @ts-ignore
+window['XPeer'] = XPeer

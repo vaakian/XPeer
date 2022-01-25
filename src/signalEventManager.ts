@@ -1,4 +1,4 @@
-import { XPeer } from "."
+import XPeer from "."
 import { Message, Peer, PeerInfo } from "./@types"
 // const log = (...args: any[]) => args
 const log = console.log
