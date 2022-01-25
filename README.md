@@ -7,7 +7,6 @@ npm i -s xpeer
 ### yarn
 ```shell
 yarn add xpeer
-
 ```
 ## Data Model
 
@@ -15,7 +14,8 @@ yarn add xpeer
 
 ```
 
-Constructor
+
+项目引入
 
 [MDN: RTCPeerConnection](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection/RTCPeerConnection)
 ```js
@@ -24,6 +24,34 @@ const xPeer = new XPeer({
     signalServer: string, // 'ws://localhost:8080',
     peerConfig: RTCConfiguration
 })
+```
+
+浏览器引入
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 引入 -->
+    <script src="https://raw.githubusercontent.com/vaakian/XPeer/main/bundle/xpeer.bundle.min.js"></script>
+    <title>XPeer</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    // 直接使用
+    const xPeer = new XPeer({
+        signalServer: string, // 'ws://localhost:8080',
+        peerConfig: RTCConfiguration
+    })
+</script>
+
+</html>
 ```
 
 METHODS
