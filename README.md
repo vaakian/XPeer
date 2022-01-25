@@ -19,11 +19,12 @@ yarn add xpeer
 
 [MDN: RTCPeerConnection](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection/RTCPeerConnection)
 ```js
-import xpeer from 'xpeer'
-const xPeer = new XPeer({
+import XPeer, { XPeerInit } from 'xpeer'
+const options: XPeerInit = {
     signalServer: string, // 'ws://localhost:8080',
     peerConfig: RTCConfiguration
-})
+}
+const xPeer = new XPeer(options)
 ```
 
 浏览器引入
