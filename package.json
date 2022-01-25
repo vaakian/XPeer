@@ -1,27 +1,36 @@
 {
   "name": "xpeer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
-  "main": "index.ts",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "dependencies": {
-    "eventemitter3": "^4.0.7",
     "sdp": "^3.0.3",
     "webrtc-adapter": "^8.1.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "bundle": "tsc && browserify -p tinyify lib/index.js -o out/xpeer.bundle.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vaakian/XPeer.git"
   },
   "keywords": [
-    "webRTC"
+    "WebRTC",
+    "Peer-to-Peer",
+    "RTCPeerConnection"
   ],
   "author": "vaakian",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/vaakian/XPeer/issues"
   },
-  "homepage": "https://github.com/vaakian/XPeer#readme"
+  "homepage": "https://github.com/vaakian/XPeer#readme",
+  "devDependencies": {
+    "browserify": "^17.0.0",
+    "eventemitter3": "^4.0.7",
+    "uglify-js": "^3.14.5"
+  }
 }

@@ -1,4 +1,4 @@
-import { EE, XPeer } from "."
+import { XPeer } from "."
 import { Message, Peer, PeerInfo } from "./@types"
 // const log = (...args: any[]) => args
 const log = console.log
@@ -134,6 +134,7 @@ export class SignalEventManager {
       this.xPeer.emit('leave', message.payload)
     }
   }
+  // @ts-ignore
   join(message: Message) {
     // impossible event
   }

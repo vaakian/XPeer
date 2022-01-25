@@ -1,9 +1,10 @@
 import { SignalEventManager } from "./signalEventManager"
-import { LocalPeer, Message, PayloadMap, Peer, PeerInfo } from "./@types"
-import EventEmitter from "eventemitter3"
+import { LocalPeer, Message, Peer, PeerInfo } from "./@types"
+// import EventEmitter from "eventemitter3"
+import EventEmitter = require('eventemitter3')
+// @ts-ignore
 import adapter from 'webrtc-adapter'
 
-console.log({ adapter })
 export const EE = new EventEmitter()
 
 // const log = (...args: any[]) => args
@@ -173,9 +174,9 @@ export class XPeer {
     pc.addEventListener('negotiationneeded', this.initNegotiationHandler(peer))
   }
   initNegotiationHandler(peer: Peer) {
-    const peers = this.localPeer.Peers
+    // const peers = this.localPeer.Peers
     const pc = peer.peerConnection
-    return (ev: Event) => {
+    return () => {
       log('PC:[negotiationneeded]', pc)
       pc.createOffer()
         .then(offer => {
@@ -211,7 +212,7 @@ export class XPeer {
     if (peer.dataChannel) {
       peer.dataChannel.onmessage = (event) => {
         if (typeof event.data === 'string') {
-          const { userInfo, payload } = JSON.parse(event.data)
+          const { payload } = JSON.parse(event.data)
           console.log('datachannel:收到消息', event)
           if (payload === 'streamStop:display') {
             // 清掉他的display

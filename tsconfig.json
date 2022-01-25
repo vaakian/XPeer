@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "es3",
+    "module": "commonjs",
+    "jsx": "react-native",
+    "lib": [
+      "dom",
+      "es2015",
+      "es2016"
+    ],
+    "declaration": true,
+    "sourceMap": false,
+    "outDir": "./lib",
+    "removeComments": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": false
+  },
+  "exclude": [
+    "node_modules",
+    "lib",
+    "out"
+  ],
+  "include": [
+    // "./src/**/*.tsx",
+    "src/**/*",
+  ]
+}
