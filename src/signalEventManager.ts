@@ -1,5 +1,5 @@
 import { EE, XPeer } from "."
-import { Message, Peer, PeerInfo } from "./types"
+import { Message, Peer, PeerInfo } from "./@types"
 // const log = (...args: any[]) => args
 const log = console.log
 export class SignalEventManager {
@@ -137,10 +137,6 @@ export class SignalEventManager {
   join(message: Message) {
     // impossible event
   }
-  // ping() {
-  //   // @ts-ignore
-  //   this.xPeer.signalSend({ type: 'pong' })
-  // }
   handle() {
     const instance = this
     // attach eventListener to the websocket connection

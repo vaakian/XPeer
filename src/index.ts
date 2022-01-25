@@ -1,5 +1,5 @@
 import { SignalEventManager } from "./signalEventManager"
-import { LocalPeer, Message, PayloadMap, Peer, PeerInfo } from "./types"
+import { LocalPeer, Message, PayloadMap, Peer, PeerInfo } from "./@types"
 import EventEmitter from "eventemitter3"
 import adapter from 'webrtc-adapter'
 
