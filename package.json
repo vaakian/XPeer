@@ -1,14 +1,13 @@
 {
   "name": "xpeer",
   "version": "1.0.0",
-  "description":"XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
+  "description": "XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
   "main": "index.ts",
   "dependencies": {
     "eventemitter3": "^4.0.7",
-    "webrtc-adapter": "^8.1.1",
-    "sdp": "^3.0.3"
+    "sdp": "^3.0.3",
+    "webrtc-adapter": "^8.1.1"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
