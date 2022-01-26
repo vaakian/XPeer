@@ -87,6 +87,13 @@ export default class XPeer {
     }
     // 发给服务器，服务器返回房间用户列表信息
     this.signalSend(message)
+    // TODO：promisify
+    /* 
+    this.signalSend(message)
+    .then(roomInfo => createOffer())
+    .then(offer => roomInfo.forEach(peerInfo => sendTo(peerInfo, offer)))
+    .then(answer => setLocalDescription(answer))
+    */
     return localPeer
   }
   initTrackHandler(peer: Peer) {

@@ -20,7 +20,7 @@ yarn add xpeer
 
 项目引入
 
-[MDN: RTCPeerConnection](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection/RTCPeerConnection)
+[MDN: RTCPeerConnection](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection)
 ```js
 import XPeer, { XPeerInit } from 'xpeer'
 const options: XPeerInit = {
