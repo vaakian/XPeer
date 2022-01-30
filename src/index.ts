@@ -367,9 +367,10 @@ export default class XPeer {
       peer.dataChannel?.close()
     })
     this.localPeer.Peers = []
-
     this.ws?.close()
     delete this.ws
+    // memory leak
+    EE.removeAllListeners()
   }
   on<E extends keyof XPeerEventMap, Arg extends XPeerEventMap[E]>(event: E, cb: (arg: Arg, type: boolean) => void) {
     EE.on(event, cb, this)
