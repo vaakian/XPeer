@@ -145,13 +145,16 @@ export default class XPeer {
       }
     }
   }
+  /**
+   * 通过开启一个datachannel作为初始连接方式
+   * @param peerInfo 需要连接的用户信息
+   */
   connectPeer(peerInfo: PeerInfo) {
     log('connectPeer', peerInfo)
-    // this.localPeer.Peers.push(peerInfo)
     const pc = new RTCPeerConnection(this.peerConfig)
+
+    // 创建datachannel之后，即会触发negotiationneeded事件，以此为实际的connect动作。
     const dc = pc.createDataChannel('dc')
-    // dc.binaryType = 'blob'
-    log(`添加datachannel`, { pc })
     const peer: Peer = {
       id: peerInfo.id,
       nick: peerInfo.nick,
@@ -180,6 +183,11 @@ export default class XPeer {
     pc.addEventListener('track', this.initTrackHandler(peer))
     pc.addEventListener('negotiationneeded', this.initNegotiationHandler(peer))
   }
+  /**
+   * 返回一个事件处理函数
+   * @param peer peer that needs initialization
+   * @returns handlerFunction
+   */
   initNegotiationHandler(peer: Peer) {
     // const peers = this.localPeer.Peers
     const pc = peer.peerConnection
