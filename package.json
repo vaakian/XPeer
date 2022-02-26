@@ -1,6 +1,6 @@
 {
   "name": "xpeer",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -11,7 +11,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "bundle": "tsc && node build.js > bundle/xpeer.bundle.min.js"
+    "bundle": "tsc && node build.js | terser --compress --mangle keep_classnames,keep_fnames > bundle/xpeer.bundle.min.js"
   },
   "repository": {
     "type": "git",
@@ -33,7 +33,6 @@
     "browserify-global-shim": "^1.0.3",
     "browserify-shim": "^3.8.14",
     "eventemitter3": "^4.0.7",
-    "tinyify": "^3.0.0",
-    "uglify-js": "^3.14.5"
+    "terser": "^5.11.0"
   }
 }
