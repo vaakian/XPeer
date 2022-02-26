@@ -1,36 +1,52 @@
 import { SignalEventManager } from "./signalEventManager"
-import { LocalPeer, Message, Peer, PeerInfo } from "./@types"
-// import EventEmitter from "eventemitter3"
+import { Local, Message, PeerInfo } from "./@types"
 import EventEmitter = require('eventemitter3')
 // @ts-ignore
 import adapter from 'webrtc-adapter'
+import Peer from "./peer"
 
-export const EE = new EventEmitter()
-
-// const log = (...args: any[]) => args
-const log = console.log
+export const log = console.log
 export interface XPeerInit {
   signalServer: string
   peerConfig: RTCConfiguration
 }
 // 处理接收的websocket
 interface XPeerEventMap {
-  "mute": Peer & { track: MediaStreamTrack },
-  "unmute": Peer & { track: MediaStreamTrack },
-  "join": Peer,
-  "leave": PeerInfo,
-  "roomInfo": PeerInfo[],
-  "stream:user": Peer,
+  "mute": Peer & { track: MediaStreamTrack }
+  "unmute": Peer & { track: MediaStreamTrack }
+  /**
+   * join 表示有新用户加入房间
+   * connected 表示本地成功(主动的)连接到远端
+   */
+  "join": Peer
+  "connected": Peer
+  "leave": PeerInfo
+  "roomInfo": PeerInfo[]
+  "stream:user": Peer
   "stream:display": Peer
+  "signal:open": void
+  "signal:error": void
+  "signal:close": void
+  "negotiationneeded:done": Peer
+  "streamStop:display": Peer
+  "message": {
+    "peer": Peer
+    "payload": string
+  }
+  "binary": {
+    "peer": Peer
+    "payload": ArrayBuffer
+  }
 }
 // type XPeerEventHandler = <T extends keyof XPeerEventMap>(event: T, cb: XPeerEventMap[T]) => void
 export default class XPeer {
-  localPeer: LocalPeer
+  local: Local
   signalServer: string
   ws?: WebSocket
   peerConfig: RTCConfiguration
+  eventBus: EventEmitter = new EventEmitter()
   constructor({ signalServer, peerConfig }: XPeerInit) {
-    this.localPeer = {
+    this.local = {
       id: '',
       nick: '',
       Peers: [],
@@ -45,17 +61,17 @@ export default class XPeer {
     return new Promise((resolve, reject) => {
       if (this.ws) {
         this.ws.addEventListener('open', () => {
-          EE.emit('signal:open')
+          this.emit('signal:open')
           const signalEventManager = new SignalEventManager(this)
           signalEventManager.handle()
           resolve(this.ws)
         })
         this.ws.addEventListener('error', () => {
-          EE.emit('signal:error')
+          this.emit('signal:error')
           reject('ws error in initWebsocketEvent')
         })
         this.ws.addEventListener('close', () => {
-          EE.emit('signal:close')
+          this.emit('signal:close')
           reject('ws close in initWebsocketEvent')
         })
       }
@@ -71,7 +87,7 @@ export default class XPeer {
     if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
       await this.initWebsocketEvent()
     }
-    const { localPeer } = this
+    const { local: localPeer } = this
     // 如果有昵称，则发送最新的昵称
     if (nick) localPeer.nick = nick
 
@@ -96,162 +112,26 @@ export default class XPeer {
     */
     return localPeer
   }
-  initTrackHandler(peer: Peer) {
-    return (event: RTCTrackEvent) => {
-      log('PC:[track] 主动者收', event)
-      // 得到远程音视频轨道
-      const track = event.track
-      // 将轨道添加到其他所有Peer中
-      // @ts-ignore
-      const sdp: string = event.target.remoteDescription.sdp.toString()
-      const addUserTrack = () => {
-        if (!peer.media.user) {
-          peer.media.user = new MediaStream()
-          // 新加入（被动）
-          EE.emit('stream:user', peer)
-        }
-        peer.media.user.addTrack(track)
-      }
-      const addDisplayTrack = () => {
-        if (!peer.media.display) {
-          peer.media.display = new MediaStream()
-          // 新加入（被动）
-          EE.emit('stream:display', peer)
-        }
-        peer.media.display.addTrack(track)
-      }
-      if (sdp.indexOf(`[user/${track.id}]`) !== -1) {
-        addUserTrack()
-        // TODO: ~~注册track的事件，用于mute和unmute~~
-      } else if (sdp.indexOf(`[display/${track.id}]`) !== -1) {
-        addDisplayTrack()
-      } else {
-        // 都匹配不到那就是单独推track，只匹配字符
-        if (sdp.indexOf('[user/') !== -1) addUserTrack()
-        else if (sdp.indexOf('[display/') !== -1) addDisplayTrack()
-      }
-    }
-  }
-  initIceCandidateHandler(peer: Peer) {
-    return (event: RTCPeerConnectionIceEvent) => {
-      log('PC:[icecandidate]', event)
-      if (event.candidate) {
-        // event.candidate may be null
-        this.signalSend({
-          type: 'icecandidate',
-          receiverId: peer.id,
-          payload: event.candidate
-        })
-      }
-    }
-  }
+
   /**
    * 通过开启一个datachannel作为初始连接方式
    * @param peerInfo 需要连接的用户信息
    */
   connectPeer(peerInfo: PeerInfo) {
-    log('connectPeer', peerInfo)
-    const pc = new RTCPeerConnection(this.peerConfig)
-
-    // 创建datachannel之后，即会触发negotiationneeded事件，以此为实际的connect动作。
-    const dc = pc.createDataChannel('dc')
-    const peer: Peer = {
-      id: peerInfo.id,
-      nick: peerInfo.nick,
-      peerConnection: pc,
-      media: {},
-      dataChannel: null
-    }
-
-    // datechannel:open 要单独拎出来：主动者创建datachannel，接受者接受该datachannel
-    dc.addEventListener('open', e => {
-      log('dc open', e)
-      peer.dataChannel = dc
-      this.emit('join', peer, false)
-      this.initDataChannelHandler(peer)
-    })
-    // 注册pc事件
-    this.initPeerEvents(peer)
-    // 全部初始化完毕，放入peer数组中
-    this.addPeer(peer)
+    const peer = new Peer(
+      peerInfo.id,
+      peerInfo.nick,
+      new RTCPeerConnection(this.peerConfig),
+      this
+    )
+    peer.connect().then(() => this.addPeer(peer))
     // 创建dc/推流 -> 触发negotiationneeded -> creaeOffer & setLocal & send -> receiverAnswer & setLocal -> icecandidate -> pc.track/dc.message
   }
-  initPeerEvents(peer: Peer) {
-    const pc = peer.peerConnection
-    // 注册事件
-    pc.addEventListener('icecandidate', this.initIceCandidateHandler(peer))
-    pc.addEventListener('track', this.initTrackHandler(peer))
-    pc.addEventListener('negotiationneeded', this.initNegotiationHandler(peer))
-  }
-  /**
-   * 返回一个事件处理函数
-   * @param peer peer that needs initialization
-   * @returns handlerFunction
-   */
-  initNegotiationHandler(peer: Peer) {
-    // const peers = this.localPeer.Peers
-    const pc = peer.peerConnection
-    return () => {
-      log('PC:[negotiationneeded]', pc)
-      pc.createOffer()
-        .then(offer => {
-          // @ts-ignore
-          offer.sdp = addCustomLabelToSdp(offer.sdp, this.localPeer.trackTags)
-          return pc.setLocalDescription(offer)
-        })
-        .then(() => {
-          // 此时sdp已经修改完毕
-          EE.emit('negotiationneeded:done', peer)
-          if (pc.localDescription) {
-            // 发送offer
-            this.signalSend({
-              type: 'offer',
-              // peer的connection需要重新协商，那么就发给这个peer
-              receiverId: peer.id,
-              payload: pc.localDescription
-            })
-          }
-          // 重大bug
-          // peers.forEach(peer => {
-          //   this.signalSend({
-          //     type: 'offer',
-          //     receiverId: peer.id,
-          //     payload: pc.localDescription as RTCSessionDescriptionInit
-          //   })
-          // })
-        })
-    }
-  }
-  // 与其它init不同
-  initDataChannelHandler(peer: Peer) {
-    if (peer.dataChannel) {
-      peer.dataChannel.onmessage = (event) => {
-        if (typeof event.data === 'string') {
-          const { payload } = JSON.parse(event.data)
-          console.log('datachannel:收到消息', event)
-          if (payload === 'streamStop:display') {
-            // 清掉他的display
-            delete peer.media.display
-            EE.emit('streamStop:display', peer)
-          } else {
-            EE.emit('message', peer, payload)
-          }
-        } else {
-          console.log('datachannel:收到二进制消息', event)
-          EE.emit('binary', peer, event.data)
-        }
-      }
-      peer.dataChannel.onclose = (event) => {
-        console.log('datachannel:断开连接', event)
-      }
-    }
-
-  }
   addPeer(peer: Peer) {
-    this.localPeer.Peers.push(peer)
+    this.local.Peers.push(peer)
   }
   findPeer(id: string) {
-    return this.localPeer.Peers.find(peer => peer.id === id)
+    return this.local.Peers.find(peer => peer.id === id)
   }
   signalSend(message: Message) {
     this.onSignalServerReady(() => {
@@ -260,20 +140,20 @@ export default class XPeer {
   }
   shareUser(constrants: MediaStreamConstraints = {}) {
     // 分享视频
-    const { localPeer } = this
+    const { local } = this
     return navigator.mediaDevices.getUserMedia(constrants)
       .then(stream => {
         // 打上tag，让createOffer读该tag再发送给对方s
         // @ts-ignore BUG
         // 将本地流添加到本地peer中
-        localPeer.media.user = stream
+        local.media.user = stream
         // 得到音视频轨道
         const tracks = stream.getTracks()
         // 将轨道添加到其他所有Peer中
         const trackTags = tracks.map(track => `[user/${track.id}]`).join('')
         // @ts-ignore
-        localPeer.trackTags = trackTags
-        localPeer.Peers.forEach(peer => {
+        local.trackTags = trackTags
+        local.Peers.forEach(peer => {
           tracks.forEach(track => {
             // @ts-ignore
             log(`添加track到peer中`, { peer, track })
@@ -281,14 +161,14 @@ export default class XPeer {
           })
         })
         // TODO: emit一个media事件
-        return localPeer
+        return local
       }).catch(err => {
         // @ts-ignore
         throw new Error(`unable to get user media: ${err.message}`)
       })
   }
   shareDisplay(constrants: DisplayMediaStreamConstraints = {}) {
-    const { localPeer } = this
+    const { local: localPeer } = this
     return navigator.mediaDevices.getDisplayMedia(constrants)
       .then(stream => {
 
@@ -315,9 +195,39 @@ export default class XPeer {
         throw new Error(`unable to get user media: ${err.message}`)
       })
   }
+  /**
+   * 将本地已有的stream全部推送到远端
+   * @param peer Peer实例
+   */
+  pushLocalStreamTo(peer: Peer) {
+    const { user, display } = this.local.media
+    const pc = peer.peerConnection
+
+
+    /**
+     * 首次推送，会有多个track，多个tag，id会保持一致
+     */
+    // @ts-ignore
+    let trackTags = ''
+    if (user) {
+      user.getTracks().forEach(track => {
+        trackTags += `[user/${track.id}]`
+        pc.addTrack(track, user)
+      })
+
+    }
+    if (display) {
+      display.getTracks().forEach(track => {
+        trackTags += `[display/${track.id}]`
+        pc.addTrack(track, display)
+      })
+    }
+    // @ts-ignore
+    this.xPeer.local.trackTags = trackTags
+  }
   onStopDisplay() {
     this.send('streamStop:display')
-    delete this.localPeer.media.display
+    delete this.local.media.display
     // // const { display } = this.localPeer.media
     // if (display) {
     //   this.send(JSON.stringify({
@@ -342,6 +252,10 @@ export default class XPeer {
 
     // }
   }
+  /**
+   * 保证在websocket已经连接成功后执行
+   * @param cb 需要执行的回调函数
+   */
   onSignalServerReady(cb: () => void) {
     if (!this.ws) {
       throw new Error('signal server not ready')
@@ -365,30 +279,30 @@ export default class XPeer {
     // 主动leave，也许发送一个leave事件更佳？
 
     // 关闭MediaStream
-    this.localPeer.media.user?.getTracks().forEach(track => track.stop())
-    this.localPeer.media.display?.getTracks().forEach(track => track.stop())
-    delete this.localPeer.media.user
-    delete this.localPeer.media.display
+    this.local.media.user?.getTracks().forEach(track => track.stop())
+    this.local.media.display?.getTracks().forEach(track => track.stop())
+    delete this.local.media.user
+    delete this.local.media.display
     // 关闭PeerConnection
-    this.localPeer.Peers.forEach(peer => {
+    this.local.Peers.forEach(peer => {
       peer.peerConnection.close()
       peer.dataChannel?.close()
     })
-    this.localPeer.Peers = []
+    this.local.Peers = []
     this.ws?.close()
     delete this.ws
     // memory leak
-    EE.removeAllListeners()
+    this.eventBus.removeAllListeners()
   }
   on<E extends keyof XPeerEventMap, Arg extends XPeerEventMap[E]>(event: E, cb: (arg: Arg, type: boolean) => void) {
-    EE.on(event, cb, this)
+    this.eventBus.on(event, cb, this)
   }
-  emit<E extends keyof XPeerEventMap, Arg extends XPeerEventMap[E]>(event: E, args: Arg, type: boolean = true) {
-    EE.emit(event, args, type)
+  emit<E extends keyof XPeerEventMap, Arg extends XPeerEventMap[E]>(event: E, args?: Arg) {
+    this.eventBus.emit(event, args)
   }
   setMute(kind: 'audio' | 'video', enabled: boolean) {
-    if (this.localPeer.media.user) {
-      this.localPeer.media.user.getTracks().forEach(track => {
+    if (this.local.media.user) {
+      this.local.media.user.getTracks().forEach(track => {
         if (track.kind === kind) track.enabled = enabled
       })
       return Promise.resolve()
@@ -398,16 +312,16 @@ export default class XPeer {
   }
   sendBinary(payload: Blob) {
     // 字符串、Blob、ArrayBuffer 或 ArrayBufferView
-    this.localPeer.Peers.forEach(peer => {
+    this.local.Peers.forEach(peer => {
       peer.dataChannel?.send(payload)
     })
   }
   send(message: string) {
     const userInfo: PeerInfo = {
-      id: this.localPeer.id,
-      nick: this.localPeer.nick
+      id: this.local.id,
+      nick: this.local.nick
     }
-    this.localPeer.Peers.forEach(({ dataChannel }) => {
+    this.local.Peers.forEach(({ dataChannel }) => {
       dataChannel?.send(JSON.stringify({
         userInfo,
         payload: message
@@ -416,19 +330,3 @@ export default class XPeer {
   }
 
 }
-// type XPeer = typeof XPeer
-
-function addCustomLabelToSdp(sdp: string = '', str: string = '') {
-  console.log('addCustomLabelToSdp', { sdp, str })
-  let lines = sdp.split("\n")
-
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i]
-    line = line.replace(/(a=extmap:[0-9]+) [^ \n]+/gi, `$1 ${str}`)
-    lines[i] = line
-  }
-
-  return lines.join("\n")
-}
-// @ts-ignore
-window['XPeer'] = XPeer

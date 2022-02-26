@@ -1,21 +1,23 @@
+import Peer from "../peer"
+
 export interface Media {
   display?: MediaStream
   user?: MediaStream
 }
-export interface Peer {
-  id: string
-  nick: string
-  // LocalPeer与该Peer连接的RTCPeerConnection
-  peerConnection: RTCPeerConnection
-  // track有两种，屏幕共享和用户音视频（远程向本地共享的）
-  media: Media
-  // dataChannel用于发送文本或其它二进制数据（文件）
-  dataChannel: RTCDataChannel | null
-}
+// export interface IPeer {
+//   id: string
+//   nick: string
+//   // LocalPeer与该Peer连接的RTCPeerConnection
+//   peerConnection: RTCPeerConnection
+//   // track有两种，屏幕共享和用户音视频（远程向本地共享的）
+//   media: Media
+//   // dataChannel用于发送文本或其它二进制数据（文件）
+//   dataChannel: RTCDataChannel | null
+// }
 
 
 // 一个LocalPeer对应对个Peers
-export interface LocalPeer {
+export interface Local {
   id: string
   nick: string
   Peers: Peer[]
