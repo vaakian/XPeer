@@ -35,30 +35,28 @@ export class SignalEventManager {
     // 收到offer: new pc -> setRemoteDescription -> createAnswer -> setLocalDescription -> send answer
     if (message.userInfo && message.type === 'offer') {
 
-      const peerInfo = message.userInfo
+      const { id, nick } = message.userInfo
 
       // 找到相应的peer信息(如果存在)
-      const existingPeer = this.xPeer.findPeer(peerInfo.id)
-      if (!existingPeer) {
+      let peer = this.xPeer.findPeer(id)
+      if (!peer) {
 
         // 否则是新建连接Peer
-        const peer = new Peer(
-          peerInfo.id,
-          peerInfo.nick,
+        peer = new Peer(
+          id,
+          nick,
           new RTCPeerConnection(this.xPeer.peerConfig),
           this.xPeer
         )
-
+        // 添加动作，是否要移到datachannel时间中？
         this.xPeer.addPeer(peer)
 
         // 并把本地流推送给对方
         this.xPeer.pushLocalStreamTo(peer)
 
-        // 回复answer
-        peer.replyAnswer(message)
-      } else {
-        existingPeer.replyAnswer(message)
       }
+      // 回复answer
+      peer.receiveOffer(message)
     }
 
   }
@@ -119,7 +117,9 @@ export class SignalEventManager {
       })
 
 
-      const keepAliveInterval = setInterval(this.keepAlive, 59 * 1000)
+      const keepAliveInterval = setInterval(() => {
+        this.keepAlive()
+      }, 59 * 1000)
       this.xPeer.ws.addEventListener('close', () => clearInterval(keepAliveInterval))
 
     } else {

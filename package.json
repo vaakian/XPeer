@@ -1,6 +1,6 @@
 {
   "name": "xpeer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -31,6 +31,7 @@
   "devDependencies": {
     "browserify": "^17.0.0",
     "browserify-global-shim": "^1.0.3",
+    "browserify-shim": "^3.8.14",
     "eventemitter3": "^4.0.7",
     "tinyify": "^3.0.0",
     "uglify-js": "^3.14.5"

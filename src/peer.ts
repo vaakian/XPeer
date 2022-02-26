@@ -42,7 +42,9 @@ export default class Peer {
     const pc = this.peerConnection
     return new Promise((resolve, reject) => {
       const dc = pc.createDataChannel('dc')
+      this.initDataChannelEvents(dc)
       dc.addEventListener('open', () => {
+        log('datachannel 打开了！')
         resolve(this)
         this.dataChannel = dc
         this.isConnected = true
@@ -51,7 +53,7 @@ export default class Peer {
         this.parentInstance.emit('connected', this)
 
         // init datachannel only after it is open
-        this.initDataChannelEvents(dc)
+
       })
 
 
@@ -63,26 +65,13 @@ export default class Peer {
   }
 
   /**
-   * 收到了offer，设置远程描述，然后回复answer
-   * @param message 收到的消息，包含发送人，和消息内容
+   * 接受offer，回复answer
+   * @param message 消息内容，包含发送人，和offer信息
    */
-  replyAnswer(message: Message) {
-    const pc = this.peerConnection
+  receiveOffer(message: Message) {
     if (message.type === 'offer') {
-      pc.setRemoteDescription(new RTCSessionDescription(message.payload))
-        .then(() => pc.createAnswer())
-        .then(answer => pc.setLocalDescription(answer))
-        .then(() => {
-          const messageToBeSent: Message = {
-            type: 'answer',
-            // @ts-ignore
-            receiverId: message.userInfo.id,
-            payload: pc.localDescription?.toJSON()
-          }
-          this.parentInstance.signalSend(messageToBeSent)
-        }).catch(err => {
-          throw new Error(`replayAnswer error: ${err}`)
-        })
+      this.peerConnection.setRemoteDescription(new RTCSessionDescription(message.payload))
+        .then(() => this.replyAnswer(message))
     }
   }
   /**
@@ -99,9 +88,31 @@ export default class Peer {
    * @param candidate 收到的candidate协商信息
    */
   receiveCandidate(candidate: RTCIceCandidateInit) {
+    log('收到icecandidate，并添加到本地')
     this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
   }
-
+  /**
+     * 收到了offer，设置远程描述，然后回复answer
+     * @param message 收到的消息，包含发送人，和消息内容
+     */
+  replyAnswer(message: Message) {
+    const pc = this.peerConnection
+    if (message.type === 'offer') {
+      pc.createAnswer()
+        .then(answer => pc.setLocalDescription(answer))
+        .then(() => {
+          const messageToBeSent: Message = {
+            type: 'answer',
+            // @ts-ignore
+            receiverId: message.userInfo.id,
+            payload: pc.localDescription?.toJSON()
+          }
+          this.parentInstance.signalSend(messageToBeSent)
+        }).catch(err => {
+          throw new Error(`replayAnswer error: ${err}`)
+        })
+    }
+  }
   /**
    * 初始化datachannel的事件处理函数
    * @param dc 需要初始化的datachannel
@@ -131,6 +142,7 @@ export default class Peer {
   initPeerConnectionEvents() {
     const peer = this
     const pc = peer.peerConnection
+    pc.oniceconnectionstatechange = () => console.log('ICESTATE_CHANGE', pc.iceConnectionState)
     pc.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
       log('PC:[icecandidate]', event)
       if (event.candidate) {

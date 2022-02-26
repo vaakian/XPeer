@@ -8,7 +8,7 @@ import Peer from "./peer"
 export const log = console.log
 export interface XPeerInit {
   signalServer: string
-  peerConfig: RTCConfiguration
+  peerConfig?: RTCConfiguration
 }
 // 处理接收的websocket
 interface XPeerEventMap {
@@ -38,6 +38,12 @@ interface XPeerEventMap {
     "payload": ArrayBuffer
   }
 }
+
+const DEFAULT_PEER_CONFIGURATION: RTCConfiguration = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' }
+  ]
+}
 // type XPeerEventHandler = <T extends keyof XPeerEventMap>(event: T, cb: XPeerEventMap[T]) => void
 export default class XPeer {
   local: Local
@@ -53,7 +59,7 @@ export default class XPeer {
       media: {}
     }
     this.signalServer = signalServer
-    this.peerConfig = peerConfig
+    this.peerConfig = peerConfig || DEFAULT_PEER_CONFIGURATION
 
   }
   initWebsocketEvent() {
@@ -63,6 +69,7 @@ export default class XPeer {
         this.ws.addEventListener('open', () => {
           this.emit('signal:open')
           const signalEventManager = new SignalEventManager(this)
+          // 保活，注册对应事件
           signalEventManager.handle()
           resolve(this.ws)
         })
@@ -124,7 +131,10 @@ export default class XPeer {
       new RTCPeerConnection(this.peerConfig),
       this
     )
-    peer.connect().then(() => this.addPeer(peer))
+    this.addPeer(peer)
+    // 不能connect之后再add，因为connect会先找到已经存在的peer
+    // TODO: 或许可以另起一个临时队列，超时就清空，成功就加入。
+    peer.connect()
     // 创建dc/推流 -> 触发negotiationneeded -> creaeOffer & setLocal & send -> receiverAnswer & setLocal -> icecandidate -> pc.track/dc.message
   }
   addPeer(peer: Peer) {
@@ -223,9 +233,9 @@ export default class XPeer {
       })
     }
     // @ts-ignore
-    this.xPeer.local.trackTags = trackTags
+    this.local.trackTags = trackTags
   }
-  onStopDisplay() {
+  private onStopDisplay() {
     this.send('streamStop:display')
     delete this.local.media.display
     // // const { display } = this.localPeer.media
@@ -256,7 +266,7 @@ export default class XPeer {
    * 保证在websocket已经连接成功后执行
    * @param cb 需要执行的回调函数
    */
-  onSignalServerReady(cb: () => void) {
+  private onSignalServerReady(cb: () => void) {
     if (!this.ws) {
       throw new Error('signal server not ready')
     }
