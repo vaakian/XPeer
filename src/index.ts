@@ -19,7 +19,7 @@ interface XPeerEventMap {
    * connected 表示本地成功(主动的)连接到远端
    */
   "join": Peer
-  "connected": Peer
+  "connect": Peer
   "leave": PeerInfo
   "roomInfo": PeerInfo[]
   "stream:user": Peer

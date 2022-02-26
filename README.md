@@ -64,8 +64,8 @@ METHODS
 ```ts
 
 // 加入房间
-xPeer.join({roomId, nick}).then(localPeer => {
-    xPeer.localPeer === localPeer // true
+xPeer.join({roomId, nick}).then(local => {
+    xPeer.local === local // true
 })
 // 退出房间
 xPeer.leave()
@@ -87,44 +87,44 @@ EVENTS
 
 ```ts
 
-xPeer.on('join', (peer: Peer, type: boolean) => {
-    // 在与该peer成功建立rtc连接时触发
-    // type为false表示我进入房间时，该peer已经在房间内了。（可以用来区分是否提示有人加入）
+xPeer.on('join', (peer: Peer) => {
+    // 有新的peer加入
+})
+xPeer.on('connect', (peer: Peer) => {
+    // 后加入房间，成功连接房间内的其他peer
 })
 xPeer.on('leave', (peerInfo: PeerInfo) => {
-
+    // 有peer离开
 })
 xPeer.on('roomInfo', (users: PeerInfo[]) => {
-
+    // 房间内的peer信息
 })
 xPeer.on('signal:open', () => {
-    
+    // 已连接到signal server
 })
 xPeer.on('signal:error', () => {
-
+    // 连接signal server失败
 })
 xPeer.on('signal:close', () => {
-
+    // signal server连接关闭
 })
 xPeer.on('stream:user', (peer: Peer) => {
-    
+    // 有新的用户推送摄像头
 })
 
 xPeer.on('stream:display', (peer: Peer) => {
-    
+    // 有新的用户推送屏幕
 })
 xPeer.on('streamStop:display', (peer: Peer)=> {
-    
+    // 有用户停止推送屏幕
 })
 
 
-// datachannel收到文本数据
 xPeer.on('message', (peer: Peer, message: string) => {
-    
+    // datachannel收到文本数据
 })
-// datachannel收到二进制数据
 xPeer.on('binary', (peer: Peer, binary: ArrayBuffer) => {
-
+    // datachannel收到二进制数据
 })
 
 ```

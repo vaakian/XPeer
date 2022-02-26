@@ -50,7 +50,7 @@ export default class Peer {
         this.isConnected = true
 
         // emit connected event
-        this.parentInstance.emit('connected', this)
+        this.parentInstance.emit('connect', this)
 
         // init datachannel only after it is open
 
