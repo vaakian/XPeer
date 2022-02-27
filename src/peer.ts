@@ -10,11 +10,12 @@ export default class Peer {
   private isConnected = false
   public media: Media = {}
   public dataChannel: RTCDataChannel | null = null
+
   /**
    * 
    * @param id 
    * @param nick 
-   * @param peerConnection created by the caller that connects to the peer
+   * @param peerConnection connection refers to the peer, created by the caller that connects to the peer
    */
   constructor(
     public id: string,
@@ -42,7 +43,7 @@ export default class Peer {
     const pc = this.peerConnection
     return new Promise((resolve, reject) => {
       const dc = pc.createDataChannel('dc')
-      this.initDataChannelEvents(dc)
+
       dc.addEventListener('open', () => {
         log('datachannel 打开了！')
         resolve(this)
@@ -53,7 +54,7 @@ export default class Peer {
         this.parentInstance.emit('connect', this)
 
         // init datachannel only after it is open
-
+        this.initDataChannelEvents(dc)
       })
 
 
@@ -87,7 +88,7 @@ export default class Peer {
    * 
    * @param candidate 收到的candidate协商信息
    */
-  receiveCandidate(candidate: RTCIceCandidateInit) {
+  receiveIceCandidate(candidate: RTCIceCandidateInit) {
     log('收到icecandidate，并添加到本地')
     this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
   }

@@ -83,7 +83,7 @@ export class SignalEventManager {
       const senderInfo: PeerInfo = message.userInfo
       // 找到相应的peer信息
       const peer = this.xPeer.findPeer(senderInfo.id)
-      peer?.receiveCandidate(message.payload)
+      peer?.receiveIceCandidate(message.payload)
     }
   }
   leave(message: Message) {
