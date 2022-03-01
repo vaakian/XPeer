@@ -11,6 +11,10 @@ npm i -s xpeer
 ```shell
 yarn add xpeer
 ```
+## signal server
+
+> NOTE: to use XPeer, the [XSignal](https://github.com/vaakian/XSignal) is essential to work with, provides signal exchanging services bwtween peers.
+
 ## Data Model
 
 ```js
