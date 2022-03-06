@@ -5,7 +5,7 @@ import EventEmitter = require('eventemitter3')
 import adapter from 'webrtc-adapter'
 import Peer from "./peer"
 
-export const log = console.log
+const log = (...args: any[]) => console.log('<Main>', ...args)
 export interface XPeerInit {
   signalServer: string
   peerConfig?: RTCConfiguration
@@ -135,7 +135,7 @@ export default class XPeer {
     // 不能connect之后再add，因为connect会先找到已经存在的peer
     // TODO: 或许可以另起一个临时队列，超时就清空，成功就加入。
     peer.connect()
-    // 创建dc/推流 -> 触发negotiationneeded -> creaeOffer & setLocal & send -> receiverAnswer & setLocal -> icecandidate -> pc.track/dc.message
+    // 创建dc/推流 -> 触发negotiationneeded -> createOffer & setLocal & send -> receiverAnswer & setLocal -> icecandidate -> pc.track/dc.message
   }
   addPeer(peer: Peer) {
     this.local.Peers.push(peer)
@@ -148,10 +148,10 @@ export default class XPeer {
       this.ws?.send(JSON.stringify(message))
     })
   }
-  shareUser(constrants: MediaStreamConstraints = {}) {
+  shareUser(constraints: MediaStreamConstraints = {}) {
     // 分享视频
     const { local } = this
-    return navigator.mediaDevices.getUserMedia(constrants)
+    return navigator.mediaDevices.getUserMedia(constraints)
       .then(stream => {
         // 打上tag，让createOffer读该tag再发送给对方s
         // @ts-ignore BUG
@@ -177,9 +177,9 @@ export default class XPeer {
         throw new Error(`unable to get user media: ${err.message}`)
       })
   }
-  shareDisplay(constrants: DisplayMediaStreamConstraints = {}) {
+  shareDisplay(constraints: DisplayMediaStreamConstraints = {}) {
     const { local: localPeer } = this
-    return navigator.mediaDevices.getDisplayMedia(constrants)
+    return navigator.mediaDevices.getDisplayMedia(constraints)
       .then(stream => {
 
         // 将本地流添加到本地peer中
@@ -270,7 +270,7 @@ export default class XPeer {
     if (!this.ws) {
       throw new Error('signal server not ready')
     }
-    // weboscket连接成功
+    // websocket连接成功
     if (this.ws.readyState === WebSocket.OPEN) {
       cb()
     } else if (this.ws.readyState === WebSocket.CONNECTING) {
@@ -280,9 +280,6 @@ export default class XPeer {
     } else if (this.ws.readyState === WebSocket.CLOSED) {
       this.initWebsocketEvent().then(cb)
       // TODO: 重连
-      // this.ws.addEventListener('open', () => {
-      //   cb()
-      // })
     }
   }
   leave() {
@@ -320,12 +317,20 @@ export default class XPeer {
       return Promise.reject(new Error('no user media'))
     }
   }
-  sendBinary(payload: Blob) {
+  /**
+   * send a ArrayBuffer as Binary to all Peers(Broadcast)
+   * @param {ArrayBuffer} payload
+   */
+  sendBinary(payload: ArrayBuffer) {
     // 字符串、Blob、ArrayBuffer 或 ArrayBufferView
     this.local.Peers.forEach(peer => {
       peer.dataChannel?.send(payload)
     })
   }
+  /**
+   * send string to all Peers(Broadcast)
+   * @param {string} message 
+   */
   send(message: string) {
     const userInfo: PeerInfo = {
       id: this.local.id,

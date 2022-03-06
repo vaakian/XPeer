@@ -2,7 +2,7 @@ import XPeer from "."
 import { Message, PeerInfo } from "./@types"
 import Peer from "./peer"
 // const log = (...args: any[]) => args
-const log = console.log
+const log = (...args: any[]) => console.log('<Signal>', ...args)
 export class SignalEventManager {
   constructor(private xPeer: XPeer) {
     this.xPeer = xPeer

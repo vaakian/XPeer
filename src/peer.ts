@@ -1,7 +1,8 @@
 import XPeer from "."
 import { Media, Message } from "./@types"
 
-import { log } from "."
+const log = (...args: any[]) => console.log('<Peer>', ...args)
+
 export enum TrackType {
   User,
   Display,
