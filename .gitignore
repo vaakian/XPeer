@@ -4,4 +4,4 @@
 .DS_Store
 yarn.lock
 server
-_.vscode
+.vscode
