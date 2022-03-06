@@ -92,6 +92,7 @@ export default class Peer {
         .then(() => this.replyAnswer(message))
     }
   }
+
   /**
    * 收到了answer，设置远程描述，无需回复。
    * 因为answer是从connect->negotiationneeded创建offer发送之后收到的
@@ -109,6 +110,7 @@ export default class Peer {
     log('收到icecandidate，并添加到本地')
     this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
   }
+
   /**
      * 收到了offer，设置远程描述，然后回复answer
      * @param message 收到的消息，包含发送人，和消息内容
@@ -131,6 +133,7 @@ export default class Peer {
         })
     }
   }
+
   /**
    * 初始化datachannel的事件处理函数
    * @param dc 需要初始化的datachannel
@@ -154,81 +157,112 @@ export default class Peer {
     dc.onclose = () => {
     }
   }
+
   /**
    * handle events
    */
   private initPeerConnectionEvents() {
     const peer = this
-    const pc = peer.peerConnection
-    pc.oniceconnectionstatechange = () => log('ICE_STATE_CHANGE', pc.iceConnectionState)
-    pc.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
-      log('PC:[icecandidate]', event)
-      if (event.candidate) {
-        // event.candidate may be null
-        this.parentInstance.signalSend({
-          type: 'icecandidate',
+    const { peerConnection: pc } = peer
+
+    pc.oniceconnectionstatechange = this.onIceConnectionStateChange.bind(peer)
+    pc.addEventListener('icecandidate', this.onIceCandidate.bind(peer))
+    pc.addEventListener('track', this.onTrack.bind(peer))
+    pc.addEventListener('negotiationneeded', this.onNegotiationneeded.bind(peer))
+    pc.addEventListener('datachannel', this.onDataChannel.bind(peer))
+  }
+
+  /**
+   * handle onIceConnectionStateChange
+   */
+  onIceConnectionStateChange() {
+    const peer = this
+    log('ICE_STATE_CHANGE', peer.peerConnection.iceConnectionState)
+  }
+
+  /**
+   * handle onIceCandidate
+   */
+  onIceCandidate(event: RTCPeerConnectionIceEvent) {
+    const peer = this
+    log('PC:[icecandidate]', event)
+    if (event.candidate) {
+      // event.candidate may be null
+      peer.parentInstance.signalSend({
+        type: 'icecandidate',
+        receiverId: peer.id,
+        payload: event.candidate
+      })
+    }
+  }
+
+  /**
+   * handle onTrack
+   */
+  onTrack(event: RTCTrackEvent) {
+    log('PC:[track] 主动者收', event)
+    const peer = this
+    // 得到远程音视频轨道
+    const stream = event.streams[0]
+    // 将轨道添加到其他所有Peer中
+    // @ts-ignore
+    const sdp: string = event.target.remoteDescription.sdp.toString()
+    const setUserStream = () => {
+      // 没有视频流 || 视频流为新的
+      if (!peer.media.user || peer.media.user.id !== stream.id) {
+        peer.media.user = stream
+        // 新加入（被动）
+        peer.parentInstance.emit('stream:user', peer)
+      }
+    }
+    const setDisplayStream = () => {
+      if (!peer.media.display || peer.media.display.id !== stream.id) {
+        peer.media.display = stream
+        // 新加入（被动）
+        peer.parentInstance.emit('stream:display', peer)
+      }
+    }
+    const streamType = detectTrackType(sdp, event.track)
+    if (streamType === TrackType.User) setUserStream()
+    else if (streamType === TrackType.Display) setDisplayStream()
+  }
+
+  /**
+   * handle onNegotiationneeded
+   */
+  onNegotiationneeded() {
+    const peer = this
+    const { parentInstance, peerConnection: pc } = peer
+    // create offer(只有本地出现变动，本地才会触发negotiationneeded事件从而发送offer)
+    // 即：总是发送offer的一方，先有datachannel/media放入peerConnection
+
+    pc.createOffer()
+      .then(offer => {
+        // @ts-ignore
+        offer.sdp = addCustomLabelToSdp(offer.sdp, parentInstance.local.trackTags)
+        return pc.setLocalDescription(offer).then(() => offer)
+      })
+      .then((offer) => {
+        peer.parentInstance.emit('negotiationneeded:done', peer)
+        // send offer to the server
+        peer.parentInstance.signalSend({
+          type: 'offer',
           receiverId: peer.id,
-          payload: event.candidate
+          payload: offer
         })
-      }
-    })
-    pc.addEventListener('track', (event: RTCTrackEvent) => {
-      log('PC:[track] 主动者收', event)
-      // 得到远程音视频轨道
-      const stream = event.streams[0]
-      // 将轨道添加到其他所有Peer中
-      // @ts-ignore
-      const sdp: string = event.target.remoteDescription.sdp.toString()
-      const setUserStream = () => {
-        // 没有视频流 || 视频流为新的
-        if (!peer.media.user || peer.media.user.id !== stream.id) {
-          peer.media.user = stream
-          // 新加入（被动）
-          this.parentInstance.emit('stream:user', peer)
-        }
-      }
-      const setDisplayStream = () => {
-        if (!peer.media.display || peer.media.display.id !== stream.id) {
-          peer.media.display = stream
-          // 新加入（被动）
-          this.parentInstance.emit('stream:display', peer)
-        }
-      }
-      const streamType = detectTrackType(sdp, event.track)
-      if (streamType === TrackType.User) setUserStream()
-      else if (streamType === TrackType.Display) setDisplayStream()
-
-    })
-    pc.addEventListener('negotiationneeded', () => {
-      // create offer(只有本地出现变动，本地才会触发negotiationneeded事件从而发送offer)
-      // 即：总是发送offer的一方，先有datachannel/media放入peerConnection
-      const pc = this.peerConnection
-      pc.createOffer()
-        .then(offer => {
-          // @ts-ignore
-          offer.sdp = addCustomLabelToSdp(offer.sdp, this.parentInstance.local.trackTags)
-          return pc.setLocalDescription(offer).then(() => offer)
-        })
-        .then((offer) => {
-          this.parentInstance.emit('negotiationneeded:done', this)
-          // send offer to the server
-          this.parentInstance.signalSend({
-            type: 'offer',
-            receiverId: this.id,
-            payload: offer
-          })
-        })
-    })
-
-
-    // receives a remote datachannel(passive)
-    pc.addEventListener('datachannel', event => {
-      const dc = event.channel
-      this.dataChannel = dc
-      this._isConnected = true
-      // emit join event
-      this.parentInstance.emit('join', this)
-    })
+      })
+  }
+  /**
+   * handle onDataChannel
+   * receives a remote datachannel(passive)
+   */
+  onDataChannel(event: RTCDataChannelEvent) {
+    const peer = this
+    const dc = event.channel
+    peer.dataChannel = dc
+    peer._isConnected = true
+    // emit join event
+    peer.parentInstance.emit('join', peer)
   }
 }
 
