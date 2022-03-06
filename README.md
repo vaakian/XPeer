@@ -13,7 +13,7 @@ yarn add xpeer
 ```
 ## signal server
 
-> NOTE: to use XPeer, the [XSignal](https://github.com/vaakian/XSignal) is essential to work with, provides signal exchanging services bwtween peers.
+> NOTE: to use XPeer, the [XSignal](https://github.com/vaakian/XSignal) is essential to work with, provides signal exchanging services between peers.
 
 ## Data Model
 
@@ -74,15 +74,15 @@ xPeer.join({roomId, nick}).then(local => {
 // 退出房间
 xPeer.leave()
 // 共享摄像头
-xPeer.shareUser(constrants: MediaStreamConstraints)
+xPeer.shareUser(constraints: MediaStreamConstraints)
 // 共享屏幕
-xPeer.shareDisplay(constrants: DisplayMediaStreamConstraints)
+xPeer.shareDisplay(constraints: DisplayMediaStreamConstraints)
 // 设置静音
 xPeer.setMute(kind: 'audio'| 'video', enabled: boolean)
 
-// 通过datachannel发送数据
+// 通过dataChannel发送数据
 xPeer.send(message: string)
-// 通过datachannel发送二进制数据（类型为ArrayBuffer）
+// 通过dataChannel发送二进制数据（类型为ArrayBuffer）
 xPeer.sendBinary(binary: ArrayBuffer)
 ```
 
@@ -125,10 +125,10 @@ xPeer.on('streamStop:display', (peer: Peer)=> {
 
 
 xPeer.on('message', (peer: Peer, message: string) => {
-    // datachannel收到文本数据
+    // dataChannel收到文本数据
 })
 xPeer.on('binary', (peer: Peer, binary: ArrayBuffer) => {
-    // datachannel收到二进制数据
+    // dataChannel收到二进制数据
 })
 
 ```
@@ -151,7 +151,7 @@ In short, in order to add video or audio to an existing connection, you need to 
 ```js
 pc.onnegotiationneeded
 
-这个重新negotiate和初次建立的区别差不多，初次建立也会触发negotiationneeded事件。
+这个重新negotiate和初次建立的区别差不多，初次建立也会触发onnegotiationneeded事件。
 在处理方式唯一不同的地方是：在接收offer时，需要区分是否已有PeerConnection，如果有，则不需要重新建立，只需要更新offer（CreateOffer）。
 ```
 
@@ -159,7 +159,7 @@ pc.onnegotiationneeded
 
 []断连就退出界面，提示断连。
 
-[]切换摄像头：先退出界面，再重新进入界面，或者重新nogitate
+[]切换摄像头：先退出界面，再重新进入界面，或者重新negotiate
 
 []声音mute和unmute
 
@@ -175,7 +175,7 @@ https://www.w3.org/TR/webrtc/#dfn-update-the-negotiation-needed-flag
 https://www.kevinmoreland.com/articles/03-22-20-webrtc-mediastream-tracks
 
 
-datachannel一旦建立之后，再重新设置local和remote都没关系。  独立的sdp-信息可以在sdp中存储。
+dataChannel一旦建立之后，再重新设置local和remote都没关系。  独立的sdp-信息可以在sdp中存储。
 同理，track一旦接收到之后，再重新设置local和remote也没关系。 独立的sdp-信息可以在sdp中存储。
 
 
@@ -185,17 +185,17 @@ datachannel一旦建立之后，再重新设置local和remote都没关系。  �
 前端部分：ios自动播放问题¿
 
 
-推流端：创建dc/推流(打上tag，存下来) -> 触发negotiationneeded(从本地读tag，放到sdp中) -> creaeOffer & setLocal & send -> receiveAnswer & setLocal -> icecandidate -> pc.ontrack/dc.onmessage
-接收端：receiveOffer -> setRemote -> createAnswer & setLocal -> pc.ontrack / dc.onmessage
+推流端：创建dc/推流(打上tag，存下来) -> 触发negotiationneeded(从本地读tag，放到sdp中) -> createOffer & setLocal & send -> receiveAnswer & setLocal -> iceCandidate -> pc.onTrack/dc.onmessage
+接收端：receiveOffer -> setRemote -> createAnswer & setLocal -> pc.onTrack / dc.onmessage
 
-pc.ontrack: 读tag区分类别，并分别存储。
+pc.onTrack: 读tag区分类别，并分别存储。
 
-一次negotiation(offer-answer)可以推多个流：包括多个datachannel/多个track。
+一次negotiation(offer-answer)可以推多个流：包括多个dataChannel/多个track。
 所以打tag，需要在sdp中一次打完。
 
 单独推流无法匹配上ID，但此时只需要匹配display字段存在，而无需匹配id。
 
 需要匹配trackId的情况只有一次发送多个track时。
 
-每当negotiation完毕后，再createDatachannel/addTrack，都需要重新negotiation。
+每当negotiation完毕后，再createDataChannel/addTrack，都需要重新negotiation。
 

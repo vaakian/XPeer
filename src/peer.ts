@@ -2,19 +2,35 @@ import XPeer from "."
 import { Media, Message } from "./@types"
 
 import { log } from "."
+export enum TrackType {
+  User,
+  Display,
+  Unknown
+}
 
 /**
- * Peer，focus on all kinds of behavior of a single Peer
+ * focus on behaviors of a single Peer
  */
 export default class Peer {
-  private isConnected = false
+  /** only private mutation */
+  private _isConnected = false
+  /** limited access from instance by developer 
+   * to prevent unpredictable issues.
+   * @readonly - any mutation would be ignored
+   */
+  get isConnected() {
+    return this._isConnected
+  }
+  set isConnected(_) {
+    // ignored
+  }
   public media: Media = {}
   public dataChannel: RTCDataChannel | null = null
 
   /**
    * 
-   * @param id 
-   * @param nick 
+   * @param id - client's identity
+   * @param nick nickname to be shown in the chat room
    * @param peerConnection connection refers to the peer, created by the caller that connects to the peer
    */
   constructor(
@@ -33,7 +49,7 @@ export default class Peer {
 
 
   /**
-   * connects to the peer (initive action)
+   * connects to the peer (initiate action)
    * creat a offer and send it to other peers
    */
   connect() {
@@ -48,7 +64,7 @@ export default class Peer {
         log('datachannel open')
         resolve(this)
         this.dataChannel = dc
-        this.isConnected = true
+        this._isConnected = true
 
         // emit connected event
         this.parentInstance.emit('connect', this)
@@ -66,8 +82,8 @@ export default class Peer {
   }
 
   /**
-   * 接受offer，回复answer
-   * @param message 消息内容，包含发送人，和offer信息
+   * 接受offer，通过{@link replyAnswer}回复answer
+   * @param {Message} message 消息内容，包含发送人，和offer信息
    */
   receiveOffer(message: Message) {
     if (message.type === 'offer') {
@@ -143,7 +159,7 @@ export default class Peer {
   private initPeerConnectionEvents() {
     const peer = this
     const pc = peer.peerConnection
-    pc.oniceconnectionstatechange = () => console.log('ICESTATE_CHANGE', pc.iceConnectionState)
+    pc.oniceconnectionstatechange = () => log('ICE_STATE_CHANGE', pc.iceConnectionState)
     pc.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
       log('PC:[icecandidate]', event)
       if (event.candidate) {
@@ -178,8 +194,8 @@ export default class Peer {
         }
       }
       const streamType = detectTrackType(sdp, event.track)
-      if (streamType === 'user') setUserStream()
-      else if (streamType === 'display') setDisplayStream()
+      if (streamType === TrackType.User) setUserStream()
+      else if (streamType === TrackType.Display) setDisplayStream()
 
     })
     pc.addEventListener('negotiationneeded', () => {
@@ -208,7 +224,7 @@ export default class Peer {
     pc.addEventListener('datachannel', event => {
       const dc = event.channel
       this.dataChannel = dc
-      this.isConnected = true
+      this._isConnected = true
       // emit join event
       this.parentInstance.emit('join', this)
     })
@@ -217,27 +233,21 @@ export default class Peer {
 
 
 function addCustomLabelToSdp(sdp: string = '', str: string = '') {
-  console.log('addCustomLabelToSdp', { sdp, str })
-  let lines = sdp.split("\n")
-
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i]
-    line = line.replace(/(a=extmap:[0-9]+) [^ \n]+/gi, `$1 ${str}`)
-    lines[i] = line
-  }
-
-  return lines.join("\n")
+  return sdp.split('\n')
+    .map(line => line.replace(/(a=extmap:[0-9]+) [^ \n]+/gi, `$1 ${str}`))
+    .join('\n')
 }
 
 function detectTrackType(sdp: string, track: MediaStreamTrack) {
   if (sdp.indexOf(`[user/${track.id}]`) !== -1) {
-    return 'user'
+    return TrackType.User
   } else if (sdp.indexOf(`[display/${track.id}]`) !== -1) {
-    return 'display'
+    return TrackType.Display
   } else {
     // 都匹配不到那就是单独推track，只匹配字符
-    if (sdp.indexOf('[user/') !== -1) return 'user'
-    else if (sdp.indexOf('[display/') !== -1) return 'display'
+    if (sdp.indexOf('[user/') !== -1) return TrackType.User
+    else if (sdp.indexOf('[display/') !== -1) return TrackType.Display
   }
-  return 'unknown'
+  return TrackType.Unknown
 }
+
