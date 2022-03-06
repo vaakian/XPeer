@@ -45,7 +45,7 @@ export default class Peer {
       const dc = pc.createDataChannel('dc')
 
       dc.addEventListener('open', () => {
-        log('datachannel 打开了！')
+        log('datachannel open')
         resolve(this)
         this.dataChannel = dc
         this.isConnected = true
@@ -118,7 +118,7 @@ export default class Peer {
    * 初始化datachannel的事件处理函数
    * @param dc 需要初始化的datachannel
    */
-  initDataChannelEvents(dc: RTCDataChannel) {
+  private initDataChannelEvents(dc: RTCDataChannel) {
     dc.onmessage = (event) => {
       if (typeof event.data === 'string') {
         const { payload } = JSON.parse(event.data)
@@ -140,7 +140,7 @@ export default class Peer {
   /**
    * handle events
    */
-  initPeerConnectionEvents() {
+  private initPeerConnectionEvents() {
     const peer = this
     const pc = peer.peerConnection
     pc.oniceconnectionstatechange = () => console.log('ICESTATE_CHANGE', pc.iceConnectionState)
