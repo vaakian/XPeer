@@ -15,12 +15,8 @@ yarn add xpeer
 
 > NOTE: to use XPeer, the [XSignal](https://github.com/vaakian/XSignal) is essential to work with, provides signal exchanging services between peers.
 
-## Data Model
-
-```js
-// to be added
-```
-
+## TODO
+- [ ] 封装文件发送`sendFile(file)`和接收`emit('file', file)`，自动编解码，并提供发送进度。
 
 项目引入
 

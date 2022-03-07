@@ -165,11 +165,11 @@ export default class Peer {
     const peer = this
     const { peerConnection: pc } = peer
 
-    pc.oniceconnectionstatechange = this.onIceConnectionStateChange.bind(peer)
-    pc.addEventListener('icecandidate', this.onIceCandidate.bind(peer))
-    pc.addEventListener('track', this.onTrack.bind(peer))
-    pc.addEventListener('negotiationneeded', this.onNegotiationneeded.bind(peer))
-    pc.addEventListener('datachannel', this.onDataChannel.bind(peer))
+    pc.addEventListener('iceconnectionstatechange', peer.onIceConnectionStateChange.bind(peer))
+    pc.addEventListener('icecandidate', peer.onIceCandidate.bind(peer))
+    pc.addEventListener('track', peer.onTrack.bind(peer))
+    pc.addEventListener('negotiationneeded', peer.onNegotiationneeded.bind(peer))
+    pc.addEventListener('datachannel', peer.onDataChannel.bind(peer))
   }
 
   /**
