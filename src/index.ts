@@ -197,7 +197,10 @@ export default class XPeer {
           })
         })
         // 添加停止事件
-        localPeer.media.display.addEventListener('inactive', this.onStopDisplay.bind(this))
+        localPeer.media.display.addEventListener('inactive', () => {
+          this.send('streamStop:display')
+          delete this.local.media.display
+        })
         // TODO: emit一个media事件
         return localPeer
       }).catch(err => {
@@ -234,33 +237,6 @@ export default class XPeer {
     }
     // @ts-ignore
     this.local.trackTags = trackTags
-  }
-  private onStopDisplay() {
-    this.send('streamStop:display')
-    delete this.local.media.display
-    // // const { display } = this.localPeer.media
-    // if (display) {
-    //   this.send(JSON.stringify({
-    //     type: 'streamStop:display',
-    //     payload: {
-    //       id: this.localPeer.id,
-    //       nick: this.localPeer.nick
-    //     }
-    //   }))
-    //   // display.getTracks().forEach(track => {
-    //   //   track.enabled = false
-    //   //   this.send(JSON.stringify({
-    //   //     type: 'stream:stop',
-    //   //     payload: {
-    //   //       id: this.localPeer.id,
-    //   //       nick: this.localPeer.nick
-    //   //     }
-    //   //   }))
-    //   // })
-    //   delete this.localPeer.media.display
-    // } else {
-
-    // }
   }
   /**
    * 保证在websocket已经连接成功后执行
@@ -323,25 +299,13 @@ export default class XPeer {
    */
   sendBinary(payload: ArrayBuffer) {
     // 字符串、Blob、ArrayBuffer 或 ArrayBufferView
-    this.local.Peers.forEach(peer => {
-      peer.dataChannel?.send(payload)
-    })
+    this.local.Peers.forEach(peer => peer.sendBinary(payload))
   }
   /**
    * send string to all Peers(Broadcast)
    * @param {string} message 
    */
   send(message: string) {
-    const userInfo: PeerInfo = {
-      id: this.local.id,
-      nick: this.local.nick
-    }
-    this.local.Peers.forEach(({ dataChannel }) => {
-      dataChannel?.send(JSON.stringify({
-        userInfo,
-        payload: message
-      }))
-    })
+    this.local.Peers.forEach(peer => peer.send(message))
   }
-
 }

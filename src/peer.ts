@@ -94,7 +94,7 @@ export default class Peer {
    * 接受offer，通过{@link replyAnswer}回复answer
    * @param {Message} message 消息内容，包含发送人，和offer信息
    */
-  receiveOffer(message: Message) {
+  public receiveOffer(message: Message) {
     if (message.type === 'offer') {
       this.peerConnection.setRemoteDescription(new RTCSessionDescription(message.payload))
         .then(() => this.replyAnswer(message))
@@ -148,8 +148,8 @@ export default class Peer {
    */
   private initDataChannelEvents(dc: RTCDataChannel) {
     dc.onmessage = (event) => {
-      if (typeof event.data === 'string') {
-        const { payload } = JSON.parse(event.data)
+      const payload = event.data
+      if (typeof payload === 'string') {
         // 停止屏幕共享通过datachannel来通知
         if (payload === 'streamStop:display') {
           // 清掉他的display
@@ -159,7 +159,7 @@ export default class Peer {
           this.parentInstance.emit('message', { peer: this, payload })
         }
       } else {
-        this.parentInstance.emit('binary', { peer: this, payload: event.data })
+        this.parentInstance.emit('binary', { peer: this, payload })
       }
     }
     dc.onclose = () => {
@@ -183,7 +183,7 @@ export default class Peer {
   /**
    * handle onIceConnectionStateChange
    */
-  onIceConnectionStateChange() {
+  private onIceConnectionStateChange() {
     const peer = this
     log('ICE_STATE_CHANGE', peer.peerConnection.iceConnectionState)
   }
@@ -191,7 +191,7 @@ export default class Peer {
   /**
    * handle onIceCandidate
    */
-  onIceCandidate(event: RTCPeerConnectionIceEvent) {
+  private onIceCandidate(event: RTCPeerConnectionIceEvent) {
     const peer = this
     log('PC:[icecandidate]', event)
     if (event.candidate) {
@@ -207,7 +207,7 @@ export default class Peer {
   /**
    * handle onTrack
    */
-  onTrack(event: RTCTrackEvent) {
+  private onTrack(event: RTCTrackEvent) {
     log('PC:[track] 主动者收', event)
     const peer = this
     // 得到远程音视频轨道
@@ -243,7 +243,7 @@ export default class Peer {
   /**
    * handle onNegotiationneeded
    */
-  onNegotiationneeded() {
+  private onNegotiationneeded() {
     const peer = this
     const { parentInstance, peerConnection: pc } = peer
     // create offer(只有本地出现变动，本地才会触发negotiationneeded事件从而发送offer)
@@ -269,31 +269,57 @@ export default class Peer {
    * handle onDataChannel
    * receives a remote datachannel(passive)
    */
-  onDataChannel(event: RTCDataChannelEvent) {
+  private onDataChannel(event: RTCDataChannelEvent) {
     const peer = this
     const dc = event.channel
     peer.dataChannel = dc
     peer._isConnected = true
     // emit join event
     peer.parentInstance.emit('join', peer)
-
+    // init datachannel events when got one from remote.
+    this.initDataChannelEvents(dc)
     // emit datachannel
     // peer.emit('datachannel', dc)
+  }
+
+  /**
+   * send the message to the peer
+   * @param message message to be sent
+   */
+  public send(message: string) {
+    const peer = this
+    const { dataChannel } = peer
+    if (dataChannel) {
+      dataChannel.send(message)
+    }
+  }
+
+  /**
+   * send ArrayBuffer as binary data
+   * @param data - a ArrayBuffer
+   */
+  public sendBinary(data: ArrayBuffer) {
+    const peer = this
+    const { dataChannel } = peer
+    if (dataChannel) {
+      dataChannel.send(data)
+    }
   }
 
   /**
    * peer event
    * @param {string} event - the event name
    * @param {function} handler - the event handler
+   * @returns {boolean} once - if the event is only triggered once
    */
-  on<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, handler: (stream: Arg) => void, once: boolean = false) {
+  public on<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, handler: (stream: Arg) => void, once: boolean = false) {
     this.eventBus[once ? 'once' : 'on'](event, handler)
   }
 
   /**
    * emit peer event
    */
-  emit<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, arg: Arg) {
+  private emit<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, arg: Arg) {
     this.eventBus.emit(event, arg)
   }
 }

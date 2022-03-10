@@ -18,7 +18,7 @@ yarn add xpeer
 ## TODO
 - [ ] 封装文件发送`sendFile(file)`和接收`emit('file', file)`，自动编解码，并提供发送进度。
 
-项目引入
+#### 项目引入
 
 [MDN: RTCPeerConnection](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection)
 ```js
@@ -60,6 +60,7 @@ const xPeer = new XPeer(options)
 
 METHODS
 
+通过`xPeer`实例所分享的任何数据，都是广播性质的。
 [MDN: MediaStreamConstraints](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia)
 ```ts
 
@@ -83,7 +84,7 @@ xPeer.sendBinary(binary: ArrayBuffer)
 ```
 
 
-EVENTS
+#### EVENTS
 
 ```ts
 
@@ -127,6 +128,38 @@ xPeer.on('binary', (peer: Peer, binary: ArrayBuffer) => {
     // dataChannel收到二进制数据
 })
 
+```
+
+
+### Peer自有事件和方法
+
+#### Events
+
+```js
+// suppose peer is a Peer instance
+const peer = xPeer.local.peers[0]
+
+// 连接状态
+peer.isConnected
+
+peer.on('userStream', (stream: MediaStream) => {
+    // 该peer推送摄像头
+})
+peer.on('displayStream', (stream: MediaStream) => {
+    // 该peer推送屏幕
+})
+```
+
+#### Methods
+
+通过`peer`自身发送的方法，可以理解为「私聊」，仅仅是把消息发送给该`peer`，不会被广播。
+```js
+
+// send string
+peer.send(message: string)
+
+// send ArrayBuffer as binary
+peer.sendBinary(binary: ArrayBuffer)
 ```
 
 
