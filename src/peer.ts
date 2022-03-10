@@ -283,13 +283,11 @@ export default class Peer {
 
   /**
    * peer event
+   * @param {string} event - the event name
+   * @param {function} handler - the event handler
    */
   on<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, handler: (stream: Arg) => void, once: boolean = false) {
-    if (once) {
-      this.eventBus.once(event, handler)
-    } else {
-      this.eventBus.on(event, handler)
-    }
+    this.eventBus[once ? 'once' : 'on'](event, handler)
   }
 
   /**
