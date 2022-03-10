@@ -1,3 +1,4 @@
+import EventEmitter = require("eventemitter3")
 import XPeer from "."
 import { Media, Message } from "./@types"
 
@@ -8,7 +9,11 @@ export enum TrackType {
   Display,
   Unknown
 }
-
+export interface PeerEventMap {
+  userStream: MediaStream
+  displayStream: MediaStream
+  datachannel: RTCDataChannel
+}
 /**
  * focus on behaviors of a single Peer
  */
@@ -27,7 +32,7 @@ export default class Peer {
   }
   public media: Media = {}
   public dataChannel: RTCDataChannel | null = null
-
+  private eventBus: EventEmitter
   /**
    * 
    * @param id - client's identity
@@ -46,6 +51,9 @@ export default class Peer {
     this.parentInstance = parentInstance
     // initialize rest of the events
     this.initPeerConnectionEvents()
+
+    // instance owned events
+    this.eventBus = new EventEmitter()
   }
 
 
@@ -213,6 +221,9 @@ export default class Peer {
         peer.media.user = stream
         // 新加入（被动）
         peer.parentInstance.emit('stream:user', peer)
+
+        // 自己发布的视频流
+        peer.emit('userStream', stream)
       }
     }
     const setDisplayStream = () => {
@@ -220,6 +231,8 @@ export default class Peer {
         peer.media.display = stream
         // 新加入（被动）
         peer.parentInstance.emit('stream:display', peer)
+        // 自己发布的屏幕共享
+        peer.emit('displayStream', stream)
       }
     }
     const streamType = detectTrackType(sdp, event.track)
@@ -263,6 +276,27 @@ export default class Peer {
     peer._isConnected = true
     // emit join event
     peer.parentInstance.emit('join', peer)
+
+    // emit datachannel
+    // peer.emit('datachannel', dc)
+  }
+
+  /**
+   * peer event
+   */
+  on<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, handler: (stream: Arg) => void, once: boolean = false) {
+    if (once) {
+      this.eventBus.once(event, handler)
+    } else {
+      this.eventBus.on(event, handler)
+    }
+  }
+
+  /**
+   * emit peer event
+   */
+  emit<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, arg: Arg) {
+    this.eventBus.emit(event, arg)
   }
 }
 
