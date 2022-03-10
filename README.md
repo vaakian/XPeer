@@ -18,7 +18,7 @@ yarn add xpeer
 ## TODO
 - [ ] 封装文件发送`sendFile(file)`和接收`emit('file', file)`，自动编解码，并提供发送进度。
 
-#### 项目引入
+#### 外部`<script>`引入
 
 [MDN: RTCPeerConnection](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection)
 ```js
@@ -121,11 +121,12 @@ xPeer.on('streamStop:display', (peer: Peer)=> {
 })
 
 
-xPeer.on('message', (peer: Peer, message: string) => {
+xPeer.on('message', ({ peer, payload }) => {
     // dataChannel收到文本数据
 })
-xPeer.on('binary', (peer: Peer, binary: ArrayBuffer) => {
+xPeer.on('binary', ({ peer, binary }) => {
     // dataChannel收到二进制数据
+    // binary is a ArrayBuffer
 })
 
 ```
@@ -140,7 +141,7 @@ xPeer.on('binary', (peer: Peer, binary: ArrayBuffer) => {
 const peer = xPeer.local.peers[0]
 
 // 连接状态
-peer.isConnected
+peer.isConnected // true or false
 
 peer.on('userStream', (stream: MediaStream) => {
     // 该peer推送摄像头
@@ -156,10 +157,10 @@ peer.on('displayStream', (stream: MediaStream) => {
 ```js
 
 // send string
-peer.send(message: string)
+peer.send('message')
 
 // send ArrayBuffer as binary
-peer.sendBinary(binary: ArrayBuffer)
+peer.sendBinary(new ArrayBuffer(...))
 ```
 
 

@@ -1,38 +1,38 @@
 {
-  "name": "xpeer",
-  "version": "1.0.5",
-  "description": "XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
-  "dependencies": {
-    "sdp": "^3.0.3",
-    "webrtc-adapter": "^8.1.1"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
-    "bundle": "tsc && node build.js | terser --compress --mangle keep_classnames,keep_fnames > bundle/xpeer.bundle.min.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vaakian/XPeer.git"
-  },
-  "keywords": [
-    "WebRTC",
-    "Peer-to-Peer",
-    "RTCPeerConnection"
-  ],
-  "author": "vaakian",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/vaakian/XPeer/issues"
-  },
-  "homepage": "https://github.com/vaakian/XPeer#readme",
-  "devDependencies": {
-    "browserify": "^17.0.0",
-    "browserify-global-shim": "^1.0.3",
-    "browserify-shim": "^3.8.14",
-    "eventemitter3": "^4.0.7",
-    "terser": "^5.11.0"
-  }
+    "name": "xpeer",
+    "version": "1.0.6",
+    "description": "XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
+    "main": "./lib/index.js",
+    "types": "./lib/index.d.ts",
+    "dependencies": {
+        "sdp": "^3.0.3",
+        "webrtc-adapter": "^8.1.1"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "tsc",
+        "bundle": "tsc && node build.js | terser --compress --mangle keep_classnames,keep_fnames > bundle/xpeer.bundle.min.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vaakian/XPeer.git"
+    },
+    "keywords": [
+        "WebRTC",
+        "Peer-to-Peer",
+        "RTCPeerConnection"
+    ],
+    "author": "vaakian",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/vaakian/XPeer/issues"
+    },
+    "homepage": "https://github.com/vaakian/XPeer#readme",
+    "devDependencies": {
+        "browserify": "^17.0.0",
+        "browserify-global-shim": "^1.0.3",
+        "browserify-shim": "^3.8.14",
+        "eventemitter3": "^4.0.7",
+        "terser": "^5.11.0"
+    }
 }
