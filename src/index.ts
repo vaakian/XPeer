@@ -4,8 +4,8 @@ import EventEmitter = require('eventemitter3')
 // @ts-ignore
 import adapter from 'webrtc-adapter'
 import Peer from "./peer"
-
 const log = (...args: any[]) => console.log('<Main>', ...args)
+export { default as Peer } from "./peer"
 export interface XPeerInit {
   signalServer: string
   peerConfig?: RTCConfiguration
@@ -277,7 +277,7 @@ export default class XPeer {
     // memory leak
     this.eventBus.removeAllListeners()
   }
-  on<E extends keyof XPeerEventMap, Arg extends XPeerEventMap[E]>(event: E, cb: (arg: Arg, type: boolean) => void) {
+  on<E extends keyof XPeerEventMap, Arg extends XPeerEventMap[E]>(event: E, cb: (arg: Arg) => void) {
     this.eventBus.on(event, cb, this)
   }
   emit<E extends keyof XPeerEventMap, Arg extends XPeerEventMap[E]>(event: E, args?: Arg) {
