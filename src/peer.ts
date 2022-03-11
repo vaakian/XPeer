@@ -45,7 +45,11 @@ export default class Peer {
     public id: string,
     public nick: string,
     public peerConnection: RTCPeerConnection,
-    private parentInstance: XPeer
+    private parentInstance: XPeer,
+    // max retry count
+    private retryCount: number = 2,
+    // already tried times
+    private connectAttemptCount: number = 0
   ) {
     this.id = id
     this.nick = nick
@@ -83,12 +87,18 @@ export default class Peer {
         // init datachannel only after it is open
         this.initDataChannelEvents(dc)
       })
-
-
-      // 超时拒绝
+      // 超时重连
       setTimeout(() => {
-        reject(new Error('connect timeout'))
-      }, 10 * 1000)
+        if (this.connectAttemptCount <= this.retryCount) {
+          this.connectAttemptCount++
+          this.connect()
+        }
+        // 超过重试次数拒绝
+        else {
+          reject(new Error('connect timeout'))
+          this.connectAttemptCount = 0
+        }
+      }, 3 * 1000)
     })
   }
 
