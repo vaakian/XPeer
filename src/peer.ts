@@ -10,8 +10,10 @@ export enum TrackType {
   Unknown
 }
 export interface PeerEventMap {
-  userStream: MediaStream
-  displayStream: MediaStream
+  'stream:user': MediaStream
+  'stream:display': MediaStream
+  'streamStop:user': void
+  'streamStop:display': void
   datachannel: RTCDataChannel
 }
 /**
@@ -150,12 +152,19 @@ export default class Peer {
     dc.onmessage = (event) => {
       const payload = event.data
       if (typeof payload === 'string') {
-        // 停止屏幕共享通过datachannel来通知
+        // 通过datachannel通知停止（屏幕共享、摄像头）
         if (payload === 'streamStop:display') {
           // 清掉他的display
           delete this.media.display
           this.parentInstance.emit('streamStop:display', this)
-        } else {
+          this.emit('streamStop:display', void 0)
+        }
+        if (payload === 'streamStop:user') {
+          delete this.media.user
+          this.emit('streamStop:user', void 0)
+          this.parentInstance.emit('streamStop:user', this)
+        }
+        else {
           this.parentInstance.emit('message', { peer: this, payload })
         }
       } else {
@@ -223,7 +232,7 @@ export default class Peer {
         peer.parentInstance.emit('stream:user', peer)
 
         // 自己发布的视频流
-        peer.emit('userStream', stream)
+        peer.emit('stream:user', stream)
       }
     }
     const setDisplayStream = () => {
@@ -232,7 +241,7 @@ export default class Peer {
         // 新加入（被动）
         peer.parentInstance.emit('stream:display', peer)
         // 自己发布的屏幕共享
-        peer.emit('displayStream', stream)
+        peer.emit('stream:display', stream)
       }
     }
     const streamType = detectTrackType(sdp, event.track)
@@ -314,6 +323,16 @@ export default class Peer {
    */
   public on<E extends keyof PeerEventMap, Arg extends PeerEventMap[E]>(event: E, handler: (stream: Arg) => void, once: boolean = false) {
     this.eventBus[once ? 'once' : 'on'](event, handler)
+    /** 
+     * 发送join在收到datachannel之后，但此时可能已经有stream了，
+     * 所以开发者用peer.on('userStream')监听时，可能会错过流推送。
+     * 即emit在监听之前就触发了，所以在监听时先进行一次判断，如果是，则在触发一次。
+    */
+    if (event === 'stream:user' && this.media.user) {
+      this.emit('stream:user', this.media.user)
+    } else if (event === 'stream:display' && this.media.display) {
+      this.emit('stream:display', this.media.display)
+    }
   }
 
   /**

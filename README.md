@@ -17,7 +17,7 @@ yarn add xpeer
 
 ## TODO
 - [ ] 封装文件发送`sendFile(file)`和接收`emit('file', file)`，自动编解码，并提供发送进度。
-
+- [ ] 重复share视频流，peer自身取消分享事件。
 ### 项目引入
 
 [MDN: RTCPeerConnection](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection)

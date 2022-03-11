@@ -28,6 +28,7 @@ interface XPeerEventMap {
   "signal:error": void
   "signal:close": void
   "negotiationneeded:done": Peer
+  "streamStop:user": Peer
   "streamStop:display": Peer
   "message": {
     "peer": Peer
@@ -148,11 +149,14 @@ export default class XPeer {
       this.ws?.send(JSON.stringify(message))
     })
   }
+  private isSharingUser = false
   shareUser(constraints: MediaStreamConstraints = {}) {
+    if (this.isSharingUser) return Promise.reject('already exists camera sharing')
     // 分享视频
     const { local } = this
     return navigator.mediaDevices.getUserMedia(constraints)
       .then(stream => {
+        this.isSharingUser = true
         // 打上tag，让createOffer读该tag再发送给对方s
         // @ts-ignore BUG
         // 将本地流添加到本地peer中
@@ -170,6 +174,12 @@ export default class XPeer {
             peer.peerConnection.addTrack(track, stream)
           })
         })
+        // 停止事件
+        stream.addEventListener('inactive', () => {
+          this.send('streamStop:user')
+          delete this.local.media.user
+          this.isSharingUser = false
+        })
         // TODO: emit一个media事件
         return local
       }).catch(err => {
@@ -177,32 +187,35 @@ export default class XPeer {
         throw new Error(`unable to get user media: ${err.message}`)
       })
   }
+  private isSharingDisplay = false
   shareDisplay(constraints: DisplayMediaStreamConstraints = {}) {
-    const { local: localPeer } = this
+    if (this.isSharingDisplay) return Promise.reject('already exists display sharing')
+    const { local } = this
     return navigator.mediaDevices.getDisplayMedia(constraints)
       .then(stream => {
-
+        this.isSharingDisplay = true
         // 将本地流添加到本地peer中
-        localPeer.media.display = stream
+        local.media.display = stream
         // 得到音视频轨道
         const tracks = stream.getTracks()
         // 将轨道添加到其他所有Peer中
 
         const trackTags = tracks.map(track => `[display/${track.id}]`).join('')
         // @ts-ignore
-        localPeer.trackTags = trackTags
-        localPeer.Peers.forEach(peer => {
+        local.trackTags = trackTags
+        local.Peers.forEach(peer => {
           tracks.forEach(track => {
             peer.peerConnection.addTrack(track, stream)
           })
         })
         // 添加停止事件
-        localPeer.media.display.addEventListener('inactive', () => {
+        stream.addEventListener('inactive', () => {
           this.send('streamStop:display')
           delete this.local.media.display
+          this.isSharingDisplay = false
         })
         // TODO: emit一个media事件
-        return localPeer
+        return local
       }).catch(err => {
         // @ts-ignore
         throw new Error(`unable to get user media: ${err.message}`)
