@@ -1,6 +1,6 @@
 {
     "name": "xpeer",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "description": "XPeer is A webRTC based tool for building Muti-Peer-to-Peer Web Application.",
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",

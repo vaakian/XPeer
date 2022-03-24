@@ -51,10 +51,11 @@ export default class Peer {
     // already tried times
     private connectAttemptCount: number = 0
   ) {
-    this.id = id
-    this.nick = nick
-    this.peerConnection = peerConnection
-    this.parentInstance = parentInstance
+    // needless
+    // this.id = id
+    // this.nick = nick
+    // this.peerConnection = peerConnection
+    // this.parentInstance = parentInstance
     // initialize rest of the events
     this.initPeerConnectionEvents()
 
