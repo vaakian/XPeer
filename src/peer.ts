@@ -30,7 +30,9 @@ export default class Peer {
     return this._isConnected
   }
   set isConnected(_) {
-    // ignored
+    console.warn(
+      `set isConnected is not allowed, please use connect() to connect to the peer`
+    )
   }
   public media: Media = {}
   public dataChannel: RTCDataChannel | null = null
