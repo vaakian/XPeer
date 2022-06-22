@@ -1,3 +1,15 @@
+## Clarification
+
+this project is for the purpose of learning NPM/webRTC/package building/WebRTC for myself, so it's definitely unusable and you may paly with it for the same purpose, **but `DO NOT` ever try it in real project(s) at all.**
+
+if you're looking for WebRTC related tools, here are several projects I would recommend:
+
+- [simple-peer](https://github.com/feross/simple-peer): muti-p2p WebRTC connection(more just than 1 to 1), but JavaScript only.
+- [peer.js](https://github.com/peers/peerjs): better TypeScript support.
+- [WebRTC-Experiment](https://github.com/muaz-khan/WebRTC-Experiment): whole lot of examples to learn.
+
+----
+
 ## [XPeer](#) · [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vaakian/xpeer/blob/main/LICENSE) [![npm version](https://img.shields.io/npm/v/xpeer.svg?style=flat)](https://www.npmjs.com/package/xpeer) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#)
 
 
