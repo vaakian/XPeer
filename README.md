@@ -1,6 +1,6 @@
 ## Clarification
 
-this project is for the purpose of learning NPM/webRTC/package building/WebRTC for myself, so it's definitely unusable and you may paly with it for the same purpose, **but `DO NOT` ever try it in real project(s) at all.**
+this project is for the purpose of learning NPM/webRTC/package building/WebRTC for myself, so it's definitely unusable and you may play with it for the same purpose, **but `DO NOT` ever try it in a real project(s) at all.**
 
 if you're looking for WebRTC related tools, here are several projects I would recommend:
 
