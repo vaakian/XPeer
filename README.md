@@ -4,8 +4,8 @@ this project is for the purpose of learning NPM/webRTC/package building/WebRTC f
 
 if you're looking for WebRTC related tools, here are several projects I would recommend:
 
-- [simple-peer](https://github.com/feross/simple-peer): muti-p2p WebRTC connection(more just than 1 to 1), but JavaScript only.
-- [peer.js](https://github.com/peers/peerjs): better TypeScript support.
+- [simple-peer](https://github.com/feross/simple-peer): muti-p2p WebRTC connection(more than just 1 to 1), it also provides a [@types/simple-peer](https://www.npmjs.com/package/@types/simple-peer) package to enable intellisense or type chekcing.
+- [peer.js](https://github.com/peers/peerjs): fully written in TypeScript.
 - [WebRTC-Experiment](https://github.com/muaz-khan/WebRTC-Experiment): whole lot of examples to learn.
 
 ----
